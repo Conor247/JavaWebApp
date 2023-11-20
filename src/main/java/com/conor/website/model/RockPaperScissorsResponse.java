@@ -1,7 +1,6 @@
 package com.conor.website.model;
 
 import com.conor.website.data.GameData;
-import lombok.Getter;
 
 import java.util.List;
 
