@@ -6,6 +6,7 @@ import com.conor.website.service.RockPaperScissorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,10 +20,11 @@ public class RockPaperScissorsController {
     }
 
     @PostMapping("/rps")
-    public ResponseEntity<RockPaperScissorsResponse> createResource(@RequestBody RockPaperScissorsRequest requestBody) {
+    //CrossOrigin allows requests from other services, this one being the front end application.
+    @CrossOrigin(origins = "http://localhost:3000")
+    public ResponseEntity<RockPaperScissorsResponse> playRockPaperScissors(@RequestBody RockPaperScissorsRequest requestBody) {
 
         return rockPaperScissorsService.playRockPaperScissors(requestBody);
 
     }
-
 }

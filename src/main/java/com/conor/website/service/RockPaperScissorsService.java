@@ -1,9 +1,14 @@
 package com.conor.website.service;
 
-import com.conor.website.data.GameData;
+import com.conor.website.database.DatabaseConnection;
+import com.conor.website.model.GameData;
 import com.conor.website.model.RockPaperScissorsRequest;
 import com.conor.website.model.RockPaperScissorsResponse;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import org.springframework.http.ResponseEntity;
@@ -18,6 +23,9 @@ public class RockPaperScissorsService {
     public int computerScissorsMoves;
     public int playerStreak;
     public double odds;
+    public double oddsPercent;
+
+    private static final DecimalFormat df = new DecimalFormat("0.00000000");
     public String currentStreak;
     public String computerMove;
     public List<String> previousCpuMovesList = new ArrayList<>();
@@ -53,7 +61,7 @@ public class RockPaperScissorsService {
         rockPaperScissorsResponse.setYouChose(rpsPlayerRequest.rpsPlayerMove);
         rockPaperScissorsResponse.setComputerChose(computerMove);
         rockPaperScissorsResponse.setStreak(currentStreak);
-        rockPaperScissorsResponse.setOdds("The odds of this are 1 in " + (int) odds);
+        rockPaperScissorsResponse.setOdds("1 in " + (int) odds + " : " + df.format(oddsPercent) + "%");
         rockPaperScissorsResponse.setComputerRockMoves(computerRockMoves);
         rockPaperScissorsResponse.setComputerPaperMoves(computerPaperMoves);
         rockPaperScissorsResponse.setComputerScissorsMoves(computerScissorsMoves);
@@ -106,16 +114,39 @@ public class RockPaperScissorsService {
         }
 
         //will still say a streak of 1 if it is not a streak as it ties into the odds information
-        currentStreak = "You are on a " + result + " streak of " + playerStreak;
+        currentStreak = result + " streak of " + playerStreak;
 
         //calculate the odds of the streak
         odds = Math.pow(3, playerStreak);
+
+        oddsPercent = 1/odds;
 
     }
 
     private void updateGameResultList(String playerMove, String computerMove, String gameResult) {
         GameData gameData = new GameData(playerMove, computerMove, gameResult);
-        previousGameResultsList.add(gameData);
+        previousGameResultsList.add(0, gameData);
+        if(previousGameResultsList.size() > 5) {
+            previousGameResultsList.remove(previousGameResultsList.size() - 1);
+        }
+        updateGameResultDatabaseTable(gameData);
     }
 
+    private void updateGameResultDatabaseTable(GameData gameData) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String sql = "INSERT INTO gameresults (player_move, computer_move, game_result) VALUES (?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                // Set values for the parameters
+                preparedStatement.setString(1, gameData.getPlayerMove());
+                preparedStatement.setString(2, gameData.getComputerMove());
+                preparedStatement.setString(3, gameData.getGameResult());
+
+                // Execute the insert statement
+                int rowsAffected = preparedStatement.executeUpdate();
+                System.out.println(rowsAffected + " row(s) inserted successfully.");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

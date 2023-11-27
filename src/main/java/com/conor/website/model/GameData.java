@@ -1,4 +1,4 @@
-package com.conor.website.data;
+package com.conor.website.model;
 
 public class GameData {
     String playerMove;
